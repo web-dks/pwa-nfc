@@ -339,6 +339,58 @@
 .fs--await-nfc {
   background: linear-gradient(165deg, #fef9c3 0%, #fde047 45%, #facc15 100%);
   color: #713f12;
+  padding: 0;
+  justify-content: flex-start;
+}
+
+.fs-await__bar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.75rem 0.5rem 0.75rem 1rem;
+  background: rgba(254, 243, 199, 0.95);
+  border-bottom: 1px solid rgba(180, 83, 9, 0.25);
+}
+
+.fs-await__bar-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #713f12;
+}
+
+.fs-await__close {
+  min-width: 44px;
+  min-height: 44px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #713f12;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.fs-await__close:hover:not(:disabled) {
+  background: rgba(113, 63, 18, 0.12);
+}
+
+.fs-await__close:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.fs-await__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem 1.25rem 2rem;
+  min-height: 0;
+  width: 100%;
 }
 
 .fs-await__icon {
@@ -346,18 +398,17 @@
   filter: drop-shadow(0 4px 12px rgba(180, 83, 9, 0.35));
 }
 
-.fs-await__title {
-  margin: 0 0 0.5rem;
-  font-size: 1.5rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-}
-
 .fs-await__lead {
-  margin: 0 0 1rem;
+  margin: 0 0 0.5rem;
   font-size: 0.95rem;
   max-width: 22rem;
   line-height: 1.45;
+}
+
+.fs-await__hint {
+  margin: 0 0 1.25rem;
+  font-size: 0.8rem;
+  opacity: 0.85;
 }
 
 .fs-await__uuid {
@@ -392,7 +443,56 @@
 }
 
 .fs--result {
-  padding: 2rem 1.25rem;
+  padding: 0;
+  justify-content: flex-start;
+}
+
+.fs-result__bar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  width: 100%;
+  padding: 0.5rem 0.35rem 0 0;
+}
+
+.fs-result__bar-spacer {
+  flex: 1;
+}
+
+.fs-result__close {
+  min-width: 44px;
+  min-height: 44px;
+  border: none;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.12);
+  color: inherit;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.fs-result__close:hover {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.fs-result__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem 1.25rem 2rem;
+  min-height: 0;
+  width: 100%;
+  overflow: auto;
+}
+
+.fs-result__countdown {
+  margin: 0 0 1rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  opacity: 0.92;
 }
 
 .fs--result-ok {
@@ -516,4 +616,164 @@
 
 .section--compact {
   margin-bottom: 0.75rem;
+}
+
+.home-hint--small {
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+}
+
+/* Leitura TAG NFC (teste) — fullscreen */
+
+.fs--tag-read {
+  z-index: 250;
+  background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+  color: #f1f5f9;
+  padding: 0;
+  justify-content: flex-start;
+}
+
+.fs-tag-read__bar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.75rem 0.5rem 0.75rem 1rem;
+  background: rgba(15, 23, 42, 0.95);
+  border-bottom: 1px solid #334155;
+}
+
+.fs-tag-read__title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.fs-tag-read__close {
+  min-width: 44px;
+  min-height: 44px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #f8fafc;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.fs-tag-read__close:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.fs-tag-read__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem 1.25rem;
+  min-height: 0;
+  width: 100%;
+  overflow: auto;
+}
+
+.fs-tag-read__loading {
+  text-align: center;
+}
+
+.fs-tag-read__lead {
+  margin: 0 0 1.25rem;
+  font-size: 1.05rem;
+  line-height: 1.45;
+}
+
+.fs-tag-read__spinner {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto;
+  border: 4px solid rgba(148, 163, 184, 0.3);
+  border-top-color: #38bdf8;
+  border-radius: 50%;
+  animation: fs-tag-spin 0.85s linear infinite;
+}
+
+@keyframes fs-tag-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.fs-tag-read__panel {
+  width: 100%;
+  max-width: 22rem;
+  text-align: left;
+}
+
+.fs-tag-read__panel--err {
+  padding: 1rem;
+  background: rgba(127, 29, 29, 0.25);
+  border: 1px solid rgba(248, 113, 113, 0.4);
+  border-radius: 10px;
+}
+
+.fs-tag-read__err-title {
+  margin: 0 0 0.5rem;
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.fs-tag-read__err-msg {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.fs-tag-read__label {
+  margin: 0 0 0.5rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #94a3b8;
+}
+
+.fs-tag-read__value {
+  display: block;
+  width: 100%;
+  margin: 0 0 1rem;
+  padding: 0.85rem 1rem;
+  font-family: ui-monospace, monospace;
+  font-size: 0.9rem;
+  word-break: break-all;
+  background: rgba(30, 41, 59, 0.8);
+  border: 1px solid #475569;
+  border-radius: 10px;
+  color: #e2e8f0;
+}
+
+.fs-tag-read__serial {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.fs-tag-read__serial-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #94a3b8;
+}
+
+.fs-tag-read__serial-value {
+  font-family: ui-monospace, monospace;
+  font-size: 0.85rem;
+  word-break: break-all;
+}
+
+.fs-tag-read__footer {
+  flex-shrink: 0;
+  width: 100%;
+  padding: 0.5rem 1.25rem 1.5rem;
+  max-width: 28rem;
 }

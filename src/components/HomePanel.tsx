@@ -2,18 +2,14 @@ type Props = {
   nfcSupported: boolean
   onStartQr: () => void
   onReadTag: () => void
-  reading: boolean
-  lastReadText: string | null
-  lastReadSerial: string | null
+  readInProgress: boolean
 }
 
 export function HomePanel({
   nfcSupported,
   onStartQr,
   onReadTag,
-  reading,
-  lastReadText,
-  lastReadSerial,
+  readInProgress,
 }: Props) {
   return (
     <>
@@ -29,8 +25,9 @@ export function HomePanel({
           Ler QR Code
         </button>
         <p className="home-hint">
-          A leitura abre em <strong>tela cheia</strong>. Depois do UUID
-          válido, siga para gravar na TAG NFC.
+          O fluxo é <strong>em série</strong>: QR → gravação NFC → resultado.
+          Depois, volta ao leitor automaticamente em 3s (ou use Concluir). O{' '}
+          <strong>✕</strong> no canto superior encerra o ciclo e volta aqui.
         </p>
       </section>
 
@@ -43,24 +40,15 @@ export function HomePanel({
             type="button"
             className="btn btn--secondary"
             onClick={onReadTag}
-            disabled={reading}
+            disabled={readInProgress}
           >
-            {reading ? 'Lendo…' : 'Ler TAG NFC (teste)'}
+            {readInProgress ? 'Lendo…' : 'Ler TAG NFC (teste)'}
           </button>
+          <p className="home-hint home-hint--small">
+            Abre em <strong>tela cheia</strong> com o conteúdo lido e botão
+            fechar.
+          </p>
         </section>
-      )}
-
-      {(lastReadText !== null || lastReadSerial !== null) && (
-        <div className="readout">
-          <p className="readout__label">Última leitura (teste)</p>
-          <p className="readout__value">{lastReadText ?? '—'}</p>
-          {lastReadSerial && (
-            <p className="readout__meta">
-              <span className="readout__meta-label">Serial:</span>{' '}
-              {lastReadSerial}
-            </p>
-          )}
-        </div>
       )}
     </>
   )

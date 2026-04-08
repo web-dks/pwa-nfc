@@ -19,7 +19,7 @@ export function QrScannerOverlay({
           type="button"
           className="fs-qr__close"
           onClick={onClose}
-          aria-label="Fechar leitor"
+          aria-label="Sair do fluxo e voltar ao início"
         >
           ✕
         </button>

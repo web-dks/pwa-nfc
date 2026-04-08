@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import './App.css'
 import { AwaitingNfcOverlay } from './components/AwaitingNfcOverlay'
 import { HomePanel } from './components/HomePanel'
+import { NfcTagReadOverlay } from './components/NfcTagReadOverlay'
 import { QrScannerOverlay } from './components/QrScannerOverlay'
 import { ResultOverlay } from './components/ResultOverlay'
 import { useNfc } from './hooks/useNfc'
@@ -25,10 +26,21 @@ export default function App() {
   const [uuid, setUuid] = useState<string | null>(null)
   const [qrBanner, setQrBanner] = useState<string | null>(null)
   const [writing, setWriting] = useState(false)
-  const [reading, setReading] = useState(false)
-  const [lastReadText, setLastReadText] = useState<string | null>(null)
-  const [lastReadSerial, setLastReadSerial] = useState<string | null>(null)
+  const [tagReadOpen, setTagReadOpen] = useState(false)
+  const [tagReadLoading, setTagReadLoading] = useState(false)
+  const [tagReadText, setTagReadText] = useState<string | null>(null)
+  const [tagReadSerial, setTagReadSerial] = useState<string | null>(null)
+  const [tagReadError, setTagReadError] = useState<string | null>(null)
+  const tagReadDismissedRef = useRef(false)
   const [writeError, setWriteError] = useState<string | null>(null)
+  const [resultCountdown, setResultCountdown] = useState(3)
+
+  const exitSerialCycleToHome = useCallback(() => {
+    setUuid(null)
+    setWriteError(null)
+    setQrBanner(null)
+    setPhase('home')
+  }, [])
 
   const onDecodedRef = useRef<(text: string) => void>(() => {})
 
@@ -40,13 +52,21 @@ export default function App() {
         setQrBanner(null)
         void (async () => {
           await stop()
+          if (!nfcSupported) {
+            setWriteError(
+              'Web NFC não disponível neste dispositivo ou navegador.',
+            )
+            setResultCountdown(3)
+            setPhase('result-error')
+            return
+          }
           setPhase('awaiting-nfc')
         })()
       } else {
         setQrBanner('Conteúdo inválido: não é um UUID.')
       }
     },
-    [stop],
+    [stop, nfcSupported],
   )
 
   onDecodedRef.current = onDecoded
@@ -62,6 +82,8 @@ export default function App() {
         await start((text) => onDecodedRef.current(text))
       } catch (e) {
         if (!cancelled) {
+          setUuid(null)
+          setWriteError(null)
           setPhase('home')
           setQrBanner(
             e instanceof Error ? e.message : 'Não foi possível abrir a câmera.',
@@ -78,60 +100,108 @@ export default function App() {
     }
   }, [phase, start, stop])
 
+  const nfcAutoWriteStarted = useRef(false)
+
+  useEffect(() => {
+    if (phase !== 'awaiting-nfc') {
+      nfcAutoWriteStarted.current = false
+      return
+    }
+    if (!uuid || !isValidUuid(uuid) || !nfcSupported) return
+    if (nfcAutoWriteStarted.current) return
+    nfcAutoWriteStarted.current = true
+
+    let cancelled = false
+    const run = async () => {
+      setWriting(true)
+      setWriteError(null)
+      try {
+        await write(uuid)
+        if (!cancelled) {
+          setResultCountdown(3)
+          setPhase('result-success')
+        }
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : 'Erro desconhecido'
+        if (!cancelled) {
+          setWriteError(msg)
+          setResultCountdown(3)
+          setPhase('result-error')
+        }
+      } finally {
+        if (!cancelled) setWriting(false)
+      }
+    }
+    void run()
+    return () => {
+      cancelled = true
+    }
+  }, [phase, uuid, nfcSupported, write])
+
+  /** Próxima etapa em série: novo leitor de QR em tela cheia. */
+  const continueCycleToQr = useCallback(() => {
+    setUuid(null)
+    setWriteError(null)
+    setQrBanner(null)
+    setPhase('qr-fullscreen')
+  }, [])
+
   const closeQrFullscreen = useCallback(async () => {
     await stop()
-    setPhase('home')
-    setQrBanner(null)
-  }, [stop])
+    exitSerialCycleToHome()
+  }, [stop, exitSerialCycleToHome])
 
   const openQrFullscreen = useCallback(() => {
     setQrBanner(null)
     setPhase('qr-fullscreen')
   }, [])
 
-  const handleWrite = useCallback(async () => {
-    if (!uuid || !isValidUuid(uuid)) return
-    setWriting(true)
-    setWriteError(null)
-    try {
-      await write(uuid)
-      setPhase('result-success')
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : 'Erro desconhecido'
-      setWriteError(msg)
-      setPhase('result-error')
-    } finally {
-      setWriting(false)
-    }
-  }, [uuid, write])
+  const closeTagReadOverlay = useCallback(() => {
+    tagReadDismissedRef.current = true
+    setTagReadOpen(false)
+    setTagReadLoading(false)
+    setTagReadText(null)
+    setTagReadSerial(null)
+    setTagReadError(null)
+  }, [])
 
   const handleRead = useCallback(async () => {
-    setReading(true)
-    setLastReadText(null)
-    setLastReadSerial(null)
+    tagReadDismissedRef.current = false
+    setTagReadOpen(true)
+    setTagReadLoading(true)
+    setTagReadText(null)
+    setTagReadSerial(null)
+    setTagReadError(null)
     try {
       const result = await read()
-      setLastReadText(result.text || '(vazio)')
-      setLastReadSerial(result.serialNumber ?? null)
+      if (tagReadDismissedRef.current) return
+      setTagReadText(result.text || '(vazio)')
+      setTagReadSerial(result.serialNumber ?? null)
     } catch (e) {
-      const msg = e instanceof Error ? e.message : 'Erro ao ler NFC'
-      setLastReadText(`Erro: ${msg}`)
+      if (tagReadDismissedRef.current) return
+      setTagReadError(e instanceof Error ? e.message : 'Erro ao ler NFC')
     } finally {
-      setReading(false)
+      if (!tagReadDismissedRef.current) setTagReadLoading(false)
     }
   }, [read])
 
-  const cancelAwaitingNfc = useCallback(() => {
-    setUuid(null)
-    setPhase('home')
-  }, [])
+  useEffect(() => {
+    if (phase !== 'result-success' && phase !== 'result-error') return
 
-  const finishResult = useCallback(() => {
-    setUuid(null)
-    setWriteError(null)
-    setQrBanner(null)
-    setPhase('home')
-  }, [])
+    setResultCountdown(3)
+    let elapsed = 0
+    const iv = window.setInterval(() => {
+      elapsed += 1
+      const left = 3 - elapsed
+      setResultCountdown(Math.max(0, left))
+      if (left <= 0) {
+        clearInterval(iv)
+        continueCycleToQr()
+      }
+    }, 1000)
+
+    return () => clearInterval(iv)
+  }, [phase, continueCycleToQr])
 
   return (
     <div className="app">
@@ -147,9 +217,7 @@ export default function App() {
               nfcSupported={nfcSupported}
               onStartQr={openQrFullscreen}
               onReadTag={() => void handleRead()}
-              reading={reading}
-              lastReadText={lastReadText}
-              lastReadSerial={lastReadSerial}
+              readInProgress={tagReadOpen && tagReadLoading}
             />
             {qrBanner && (
               <p className="home-banner home-banner--error" role="alert">
@@ -172,10 +240,8 @@ export default function App() {
       {phase === 'awaiting-nfc' && uuid && (
         <AwaitingNfcOverlay
           uuid={uuid}
-          nfcSupported={nfcSupported}
           writing={writing}
-          onWrite={() => void handleWrite()}
-          onCancel={cancelAwaitingNfc}
+          onExit={exitSerialCycleToHome}
         />
       )}
 
@@ -184,7 +250,9 @@ export default function App() {
           variant="success"
           uuid={uuid}
           errorMessage={null}
-          onDone={finishResult}
+          countdownSeconds={resultCountdown}
+          onContinue={continueCycleToQr}
+          onExit={exitSerialCycleToHome}
         />
       )}
 
@@ -193,7 +261,19 @@ export default function App() {
           variant="error"
           uuid={uuid}
           errorMessage={writeError}
-          onDone={finishResult}
+          countdownSeconds={resultCountdown}
+          onContinue={continueCycleToQr}
+          onExit={exitSerialCycleToHome}
+        />
+      )}
+
+      {tagReadOpen && (
+        <NfcTagReadOverlay
+          loading={tagReadLoading}
+          text={tagReadText}
+          serial={tagReadSerial}
+          error={tagReadError}
+          onClose={closeTagReadOverlay}
         />
       )}
     </div>
